@@ -27,6 +27,23 @@ void ei_interrupt(int reg_ptr)
 ```
 我们忽略了硬件相关的操作, 直接看软件是怎么处理的, 在网卡接收到数据时会触发调用 `ei_interrupt()` 中断处理函数, 而 `ei_interrupt()` 会调用 `ei_receive()` 函数读取数据, `ei_receive()` 函数代码如下:
 ```cpp
+void
+netif_rx(struct sk_buff *skb)
+{
+  /* Set any necessary flags. */
+  skb->sk = NULL;
+  skb->free = 1;
+
+  /* and add it to the "backlog" queue. */
+  IS_SKB(skb);
+  skb_queue_tail(&backlog, skb);
+
+  /* If any packet arrived, mark it for processing. */
+  if (backlog != NULL) mark_bh(INET_BH);
+
+  return;
+}
+
 static void ei_receive(struct device *dev)
 {
     ...
@@ -57,3 +74,4 @@ static void ei_receive(struct device *dev)
     return;
 }
 ```
+`ei_receive()` 函数首先调用 `alloc_skb()` 函数创建一个 `sk_buff` 对象, 这个对象主要是用来保存接收到的数据和要发送的数据. 然后调用 `ei_block_input()` 函数从网卡中读取包数据, 并通过调用 `netif_rx()` 函数把这个 `sk_buff` 对象添加到 `blacklog` 链表中. 最后调用 `mark_bh(INET_BH)` 标记中断下半部分需要触发 `inet_bh()` 函数.
