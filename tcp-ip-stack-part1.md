@@ -214,3 +214,6 @@ struct socket {
 比如 `SOCK_STREAM` 表示流式, 而 `SOCK_DGRAM` 表示数据报.
 
 `ops` 字段存储socket一系列相关的操作接口, 上面已经介绍过. `data` 字段存储的是不同类型socket的上下文, 比如 `inet` 类型的socket存储的就是 `struct sock` 结构, 而 `unix` 类型的socket存储的就是 `struct unix_proto_data`结构.
+
+我们通过一张图来表示 `struct socket` 结构的关系网:
+![socket](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/socket.jpg)
