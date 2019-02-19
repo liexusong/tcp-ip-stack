@@ -217,3 +217,6 @@ struct socket {
 
 我们通过一张图来表示 `struct socket` 结构的关系网:
 ![socket](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/socket.jpg)
+
+现在我们来分析一下, 当调用 `send()` 函数发送数据的时候, 从用户空间到内核空间的调用链是怎样的, 如下图:
+![calllink](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/call_link.jpg)
