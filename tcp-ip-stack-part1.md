@@ -202,7 +202,7 @@ struct socket {
   struct inode          *inode;
 };
 ```
-`type` 字段表示socket的类型, 如下:
+`type` 字段表示socket的类型, 我们在创建一个socket时需要指定 `type` 的值, `type` 的值有如下选择:
 ```cpp
 #define SOCK_STREAM    1       /* stream (connection) socket	*/
 #define SOCK_DGRAM     2       /* datagram (conn.less) socket	*/
@@ -211,3 +211,5 @@ struct socket {
 #define SOCK_SEQPACKET 5       /* sequential packet socket	*/
 #define SOCK_PACKET    10      /* linux specific way of	*/
 ```
+比如 `SOCK_STREAM` 表示流式, 而 `SOCK_DGRAM` 表示数据报.
+
