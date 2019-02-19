@@ -8,75 +8,52 @@
 ```cpp
 void ei_interrupt(int reg_ptr)
 {
-    int irq = -(((struct pt_regs *)reg_ptr)->orig_eax+2);
-    struct device *dev = (struct device *)(irq2dev_map[irq]);
-    int e8390_base;
-    int interrupts, boguscount = 0;
-    struct ei_device *ei_local;
-
-    if (dev == NULL) {
-        printk ("net_interrupt(): irq %d for unknown device.\n", irq);
-        return;
-    }
-    e8390_base = dev->base_addr;
-    ei_local = (struct ei_device *) dev->priv;
-    if (dev->interrupt || ei_local->irqlock) {
-        /* The "irqlock" check is only for testing. */
-        sti();
-        printk(ei_local->irqlock
-               ? "%s: Interrupted while interrupts are masked! isr=%#2x imr=%#2x.\n"
-               : "%s: Reentering the interrupt handler! isr=%#2x imr=%#2x.\n",
-               dev->name, inb_p(e8390_base + EN0_ISR),
-               inb_p(e8390_base + EN0_IMR));
-        return;
-    }
-
-    dev->interrupt = 1;
-    sti(); /* Allow other interrupts. */
-
-    /* Change to page 0 and read the intr status reg. */
-    outb_p(E8390_NODMA+E8390_PAGE0, e8390_base + E8390_CMD);
-    if (ei_debug > 3)
-        printk("%s: interrupt(isr=%#2.2x).\n", dev->name,
-               inb_p(e8390_base + EN0_ISR));
-
-    /* !!Assumption!! -- we stay in page 0.     Don't break this. */
+    ...
     while ((interrupts = inb_p(e8390_base + EN0_ISR)) != 0
            && ++boguscount < 5) {
-        if (interrupts & ENISR_RDC) {
-            /* Ack meaningless DMA complete. */
-            outb_p(ENISR_RDC, e8390_base + EN0_ISR);
-        }
+        ...
         if (interrupts & ENISR_OVER) {
             ei_rx_overrun(dev);
         } else if (interrupts & (ENISR_RX+ENISR_RX_ERR)) {
             /* Got a good (?) packet. */
             ei_receive(dev);
         }
-        /* Push the next to-transmit packet through. */
-        if (interrupts & ENISR_TX) {
-            ei_tx_intr(dev);
-        } else if (interrupts & ENISR_COUNTERS) {
-            struct ei_device *ei_local = (struct ei_device *) dev->priv;
-            ei_local->stat.rx_frame_errors += inb_p(e8390_base + EN0_COUNTER0);
-            ei_local->stat.rx_crc_errors   += inb_p(e8390_base + EN0_COUNTER1);
-            ei_local->stat.rx_missed_errors+= inb_p(e8390_base + EN0_COUNTER2);
-            outb_p(ENISR_COUNTERS, e8390_base + EN0_ISR); /* Ack intr. */
-        }
-
-        /* Ignore the transmit errs and reset intr for now. */
-        if (interrupts & ENISR_TX_ERR) {
-            outb_p(ENISR_TX_ERR, e8390_base + EN0_ISR); /* Ack intr. */
-        }
-        outb_p(E8390_NODMA+E8390_PAGE0+E8390_START, e8390_base + E8390_CMD);
+        ...
     }
-
-    if (interrupts && ei_debug) {
-        printk("%s: unknown interrupt %#2x\n", dev->name, interrupts);
-        outb_p(E8390_NODMA+E8390_PAGE0+E8390_START, e8390_base + E8390_CMD);
-        outb_p(0xff, e8390_base + EN0_ISR); /* Ack. all intrs. */
-    }
+    ...
     dev->interrupt = 0;
+    return;
+}
+```
+我们忽略了硬件相关的操作, 直接看软件是怎么处理的, 在网卡接收到数据时会触发调用 `ei_interrupt()` 中断处理函数, 而 `ei_interrupt()` 会调用 `ei_receive()` 函数读取数据, `ei_receive()` 函数代码如下:
+```cpp
+static void ei_receive(struct device *dev)
+{
+    ...
+        if ((rx_frame.status & 0x0F) == ENRSR_RXOK) {
+            int sksize = sizeof(struct sk_buff) + pkt_len;
+            struct sk_buff *skb;
+
+            skb = alloc_skb(sksize, GFP_ATOMIC);
+            if (skb == NULL) {
+                if (ei_debug)
+                    printk("%s: Couldn't allocate a sk_buff of size %d.\n",
+                           dev->name, sksize);
+                ei_local->stat.rx_dropped++;
+                break;
+            } else {
+                skb->mem_len = sksize;
+                skb->mem_addr = skb;
+                skb->len = pkt_len;
+                skb->dev = dev;
+
+                ei_block_input(dev, pkt_len, (char *) skb->data,
+                               current_offset + sizeof(rx_frame));
+                netif_rx(skb);
+                ei_local->stat.rx_packets++;
+            }
+        }
+    ...
     return;
 }
 ```
