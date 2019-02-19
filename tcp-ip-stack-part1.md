@@ -186,3 +186,28 @@ void inet_proto_init(struct ddi_proto *pro)
 }
 ```
 我们接着分析 `sock_socket()` 这个函数, 在找到 `family` 类型的socket操作后, 会调用 `sock_alloc()` 函数申请一个 `struct socket` 对象, 然后再调用socket操作的 `create()` 方法来初始化指定类型socket的上下文. 譬如 `inet` 类型的socket调用的就是 `inet_create()` 函数. 最后调用 `get_fd()` 来获取一个文件句柄来映射此socket.
+
+现在我们来看看一个socket在Linux内核中的表示:
+```cpp
+struct socket {
+  short                  type;         /* SOCK_STREAM, ...        */
+  socket_state           state;
+  long                   flags;
+  struct proto_ops      *ops;          /* protocols do most everything    */
+  void                  *data;         /* protocol data        */
+  struct socket         *conn;         /* server socket connected to    */
+  struct socket         *iconn;        /* incomplete client conn.s    */
+  struct socket         *next;
+  struct wait_queue    **wait;         /* ptr to place to wait on    */
+  struct inode          *inode;
+};
+```
+`type` 字段表示socket的类型, 如下:
+```cpp
+#define SOCK_STREAM    1       /* stream (connection) socket	*/
+#define SOCK_DGRAM     2       /* datagram (conn.less) socket	*/
+#define SOCK_RAW       3       /* raw socket			*/
+#define SOCK_RDM       4       /* reliably-delivered message	*/
+#define SOCK_SEQPACKET 5       /* sequential packet socket	*/
+#define SOCK_PACKET    10      /* linux specific way of	*/
+```
