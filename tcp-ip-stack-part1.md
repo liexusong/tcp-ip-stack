@@ -1,3 +1,6 @@
+# Socket接口层
+我们知道, 要使用TCP协议进行通信, 首先必须创建一个 `socket`, 然后再通过这个 `socket` 来进行通信. `socket` 本来是 `插头` 的意思, 但在计算机科学上被称为 `套接字`. `socket` 在Linux系统中是一种特殊的文件, 所以可以通过 `read()` 和 `write()` 函数对其进行读写操作. 但与普通文件不一样的是, `socket` 还有其他特殊的方法, 譬如 `send()`, `recv()`, `sendto()`, `recvfrom()`等等. 下面我们先来介绍 `socket` 相关的系统调用.
+
 ## Socket族系统调用入口
 
 所有Socket相关的系统调用都由函数 `sys_socketcall()` 进入, 源码如下:
