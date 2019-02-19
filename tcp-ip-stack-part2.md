@@ -1,7 +1,7 @@
 # Linux内核中的 TCP/IP
 前面一章介绍了Socket族相关的接口, 那么接下来我们来看看Linux内核是怎么实现 `TCP/IP协议` 的吧.
 
-## 数据传输
+## 数据接收
 我们先不考虑内核是怎么实现 `TCP/IP协议` 的, 而是先来了解下当网卡接收到数据时, 内核有什么相应的处理. 
 
 当网卡接收到数据时, 会向CPU发送 `中断信号`. 当CPU接收到 `中断信号` 后会调用相应的 `中断处理程序` 来处理中断. 因为不同的网卡处理数据的方式不一样, 所以不同的网卡的 `中断处理程序` 也不一样. 譬如 `NS8390芯片` 网卡的中断处理程序是 `ei_interrupt()`, 下面我们也主要使用这个中断处理程序作为例子, 起代码如下:
@@ -75,3 +75,49 @@ static void ei_receive(struct device *dev)
 }
 ```
 `ei_receive()` 函数首先调用 `alloc_skb()` 函数创建一个 `sk_buff` 对象, 这个对象主要是用来保存接收到的数据和要发送的数据. 然后调用 `ei_block_input()` 函数从网卡中读取包数据, 并通过调用 `netif_rx()` 函数把这个 `sk_buff` 对象添加到 `blacklog` 链表中. 最后调用 `mark_bh(INET_BH)` 标记中断下半部分需要触发 `inet_bh()` 函数.
+
+我们在来看看中断下半部分 `inet_bh()` 函数做了什么工作:
+```cpp
+void
+inet_bh(void *tmp)
+{
+    ...
+    while((skb=skb_dequeue(&backlog))!=NULL) // 从sk_buff队列中获取一个sk_buff
+    {
+        ...
+        skb->h.raw = skb->data + skb->dev->hard_header_len;
+        skb->len -= skb->dev->hard_header_len;
+
+        type = skb->dev->type_trans(skb, skb->dev);
+
+        for (ptype = ptype_base; ptype != NULL; ptype = ptype->next) {
+            if (ptype->type == type || ptype->type == NET16(ETH_P_ALL)) {
+                struct sk_buff *skb2;
+
+                if (ptype->type==NET16(ETH_P_ALL))
+                    nitcount--;
+                if (ptype->copy || nitcount) {
+                    skb2 = alloc_skb(skb->mem_len, GFP_ATOMIC);
+                    if (skb2 == NULL)
+                        continue;
+                    memcpy(skb2, (const void *) skb, skb->mem_len);
+                    skb2->mem_addr = skb2;
+                    skb2->h.raw = (unsigned char *)(
+                        (unsigned long) skb2 +
+                        (unsigned long) skb->h.raw -
+                        (unsigned long) skb
+                    );
+                    skb2->free = 1;
+                } else {
+                    skb2 = skb;
+                }
+
+                flag = 1;
+
+                ptype->func(skb2, skb->dev, ptype);
+            }
+        }
+    }
+    ...
+}
+```
