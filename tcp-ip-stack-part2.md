@@ -196,7 +196,9 @@ struct iphdr {
 可以使用下图来直观的表示 `struct iphdr` 结构:
 ![ip_packet_header](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/ip_packet.jpg)
 
-由于本文只讨论 `TCP协议`, 所以 `IP包头` 的 `protocol` 字段必须为 `IPPROTO_TCP`, 而其处理函数为 `tcp_rcv()`, 由于 `tcp_rcv()` 函数很长, 所以这里分片来分析, 在分析 `tcp_rcv()` 函数前, 我们先来介绍一下 `TCP包头` 结构 `struct tcphdr`:
+由于本文只讨论 `TCP协议`, 所以 `IP包头` 的 `protocol` 字段必须为 `IPPROTO_TCP`, 而其处理函数为 `tcp_rcv()`, 由于 `tcp_rcv()` 函数很长, 所以这里分片来分析. 
+
+在分析 `tcp_rcv()` 函数前, 我们先来介绍一下 `TCP包头` 结构 `struct tcphdr`:
 ```cpp
 struct tcphdr {
   unsigned short    source;
@@ -220,3 +222,4 @@ struct tcphdr {
 结构图如下:
 
 ![tcp_packet_header](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/tcp_packet.jpg)
+
