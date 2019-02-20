@@ -145,3 +145,5 @@ eth_type_trans(struct sk_buff *skb, struct device *dev)
   return(eth->h_proto);
 }
 ```
+`struct ethhdr` 结构表示以太网帧头部, 结构如下图:
+![eth_frame_header]()
