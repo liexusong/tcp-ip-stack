@@ -88,7 +88,9 @@ inet_bh(void *tmp)
         skb->h.raw = skb->data + skb->dev->hard_header_len;
         skb->len -= skb->dev->hard_header_len;
 
-        type = skb->dev->type_trans(skb, skb->dev);
+        // 每个缓存对象都来源于一个网卡设备, 而不同的网卡设备有不同的物理帧头部
+        // 这里使用网卡设备来解包缓存对象, 获取到的type指定了下一层使用的协议(如IP, ARP等)
+        type = skb->dev->type_trans(skb, skb->dev); 
 
         for (ptype = ptype_base; ptype != NULL; ptype = ptype->next) {
             if (ptype->type == type || ptype->type == NET16(ETH_P_ALL)) {
@@ -121,3 +123,4 @@ inet_bh(void *tmp)
     ...
 }
 ```
+`inet_bh()` 函数首先会从 `blacklog` 队列中拿到一个 `sk_buff` 缓存对象, 然后再根据这个缓存对象是从哪个设备获取的来解包, 
