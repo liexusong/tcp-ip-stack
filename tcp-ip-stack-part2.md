@@ -146,4 +146,4 @@ eth_type_trans(struct sk_buff *skb, struct device *dev)
 }
 ```
 `struct ethhdr` 结构表示以太网帧头部, 结构如下图:
-![eth_frame_header]()
+![eth_frame_header](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/eth_frame.jpg)
