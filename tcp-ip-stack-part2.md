@@ -179,19 +179,24 @@ ip_rcv(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 `ip_rcv()` 函数首先根据 `IP包头` 的 `protocol` 字段来查找下一层协议的处理函数, `IP包头` 结构定义如下:
 ```cpp
 struct iphdr {
-  unsigned char    ihl:4,
-    	             version:4;
-  unsigned char    tos;
-  unsigned short	 tot_len;
-  unsigned short	 id;
-  unsigned short	 frag_off;
-  unsigned char    ttl;
-  unsigned char    protocol;
-  unsigned short	 check;
-  unsigned long    saddr;
-  unsigned long    daddr;
+  unsigned char   ihl:4,
+                  version:4;
+  unsigned char   tos;
+  unsigned short  tot_len;
+  unsigned short  id;
+  unsigned short  frag_off;
+  unsigned char   ttl;
+  unsigned char   protocol;
+  unsigned short  check;
+  unsigned long   saddr;
+  unsigned long   daddr;
   /*The options start here. */
 };
 ```
 可以使用下图来直观的表示 `struct iphdr` 结构:
 ![ip_packet_header](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/ip_packet.jpg)
+
+由于本文只讨论 `TCP协议`, 所以 `IP包头` 的 `protocol` 字段必须为 `IPPROTO_TCP`, 而其处理函数为 `tcp_rcv()`, 由于 `tcp_rcv()` 函数很长, 所以这里分片来分析:
+```cpp
+
+```
