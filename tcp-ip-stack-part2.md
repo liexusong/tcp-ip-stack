@@ -150,4 +150,31 @@ eth_type_trans(struct sk_buff *skb, struct device *dev)
 
 `h_proto` 字段指定下一层使用的协议类型, 所以 `eth_type_trans()` 函数返回的就是下一层使用的协议类型.
 
-获取到下一层使用的协议类型后, 就遍历 `ptype_base` 列表找到对应协议的处理函数. 
+获取到下一层使用的协议类型后, 就遍历 `ptype_base` 列表找到对应协议的处理函数. 由于本文只讨论 `IP协议`, 所以找到的处理函数是 `ip_rcv()`, 代码如下:
+```cpp
+int
+ip_rcv(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
+{
+  struct iphdr *iph = skb->h.iph;
+  ...
+
+  skb->ip_hdr = iph;
+  skb->h.raw += iph->ihl*4; // 下一个协议的包头开始
+
+  hash = iph->protocol & (MAX_INET_PROTOS -1);
+
+  for (ipprot = (struct inet_protocol *)inet_protos[hash];
+       ipprot != NULL;
+       ipprot=(struct inet_protocol *)ipprot->next)
+  {
+    ...
+    ipprot->handler(skb2, dev, opts_p ? &opt : 0, iph->daddr,
+            (ntohs(iph->tot_len) - (iph->ihl * 4)),
+            iph->saddr, 0, ipprot);
+  }
+
+  ...
+  
+  return(0);
+}
+```
