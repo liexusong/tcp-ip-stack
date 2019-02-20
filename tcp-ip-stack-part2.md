@@ -218,4 +218,4 @@ struct tcphdr {
 };
 ```
 结构图如下:
-![tcp_packet_header]()
+![tcp_packet_header](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/tcp_packet.jpg)
