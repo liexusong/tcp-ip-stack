@@ -147,3 +147,5 @@ eth_type_trans(struct sk_buff *skb, struct device *dev)
 ```
 `struct ethhdr` 结构表示以太网帧头部, 结构如下图:
 ![eth_frame_header](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/eth_frame.jpg)
+
+`h_proto` 字段指定下一层使用的协议类型, 所以这个函数返回的就是下一层使用的协议类型.
