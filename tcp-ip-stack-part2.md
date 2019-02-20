@@ -123,4 +123,25 @@ inet_bh(void *tmp)
     ...
 }
 ```
-`inet_bh()` 函数首先会从 `blacklog` 队列中拿到一个 `sk_buff` 缓存对象, 由于缓存对象必须来源于某一个特定的网卡设备, 而不同的网卡设备的数据包头部是不一样的, 所以对于不同的网卡设备需要提供不同的解包函数, 所以代码 `skb->dev->type_trans(skb, skb->dev)` 就是根据不同的网卡设备来解包, 获取到下一层所使用的协议(如IP协议或者ARP协议等).
+`inet_bh()` 函数首先会从 `blacklog` 队列中拿到一个 `sk_buff` 缓存对象, 由于缓存对象必须来源于某一个特定的网卡设备, 而不同的网卡设备的数据包头部是不一样的, 所以对于不同的网卡设备需要提供不同的解包函数, 所以代码 `skb->dev->type_trans(skb, skb->dev)` 就是根据不同的网卡设备来解包, 获取到下一层所使用的协议(如IP协议或者ARP协议等). 例如对于 `NS8390芯片` 的网卡使用的就是 `eth_type_trans()` 函数, 所以这里我们来看看 `eth_type_trans()` 这个函数的实现:
+```cpp
+#define ETH_ALEN    6
+
+struct ethhdr {
+  unsigned char     h_dest[ETH_ALEN];   /* destination eth addr */
+  unsigned char     h_source[ETH_ALEN]; /* source ether addr    */
+  unsigned short    h_proto;            /* packet type ID field */
+};
+
+unsigned short
+eth_type_trans(struct sk_buff *skb, struct device *dev)
+{
+  struct ethhdr *eth;
+
+  eth = (struct ethhdr *) skb->data;
+
+  if(ntohs(eth->h_proto)<1536)
+      return(htons(ETH_P_802_3));
+  return(eth->h_proto);
+}
+```
