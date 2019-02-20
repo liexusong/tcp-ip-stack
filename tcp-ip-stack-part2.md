@@ -172,9 +172,9 @@ ip_rcv(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
             (ntohs(iph->tot_len) - (iph->ihl * 4)),
             iph->saddr, 0, ipprot);
   }
-
   ...
-  
   return(0);
 }
 ```
+`ip_rcv()` 函数首先根据 `IP包头` 的 `protocol` 字段来查找下一层协议的处理函数, 这里介绍的是 `TCP协议`, 所以找到的处理函数是 `tcp_rcv()`, 现在先来看看 `IP包头` 的结构图:
+![ip_packet_header](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/ip_packet.jpg)
