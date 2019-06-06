@@ -223,4 +223,7 @@ struct tcphdr {
 
 ![tcp_packet_header](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/tcp_packet.jpg)
 
-因为TCP协议本质是一个状态机, 所以要了解TCP协议前需要弄清楚各个状态之间的转换, 可以参考文章: [TCP状态机](https://www.jianshu.com/p/3c7a0771b67e)
+因为TCP协议本质是一个状态机, 所以要了解TCP协议前需要弄清楚各个状态之间的转换, 可以参考文章: [TCP状态机](https://www.jianshu.com/p/3c7a0771b67e), 通过下面图片来对TCP状态机有个大概的了解:
+
+![state-machine](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/state-machine.jpg)
+
