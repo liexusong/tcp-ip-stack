@@ -3,7 +3,7 @@
 
 ![tcp-ip-stack-layer](https://raw.githubusercontent.com/liexusong/tcp-ip-stack/master/images/tcp-ip-stack-layer.jpg)
 
-上图左边对应的是OSI模型分层，OSI把网络按照层次分为七层，由下到上分别为 `物理层`、`数据链路层`、`网络层`、`传输层`、`会话层`、`表示层`、`应用层`。
+上图左边对应的是OSI模型分层，OSI把网络按照层次分为七层，由下到上分别为： `物理层`、`数据链路层`、`网络层`、`传输层`、`会话层`、`表示层`、`应用层`。而TCP/IP模型分层只分为四层，分别为：`网络接口层`、`网络层`、`传输层`、`应用层`，它们之间的对应关系如上图所示。
 
 
 
