@@ -10,8 +10,32 @@
 ## 网络接口层
 `网络接口层` 在TCP/IP模型是最底部的一层，这一层主要包括网卡驱动程序和对数据包接收和发送，把接收到的数据提交并通知上一层协议进行处理。
 
+### 网络接口中断
+本文主要以 `NS8390网卡` 作为分析对象，对于网卡驱动，本文不作详细分析（因为网卡驱动是比较机械化的一些操作，而且对于理解TCP/IP协议并无多大帮助），我们只要知道当网卡接收到数据时会发生什么事情即可。
 
-
-
-
+当网卡接收到数据时会触发网卡中断，对于 `NS8390网卡` 而言，中断的处理函数为 `ei_interrupt()`，我们来看看 `ei_interrupt()` 函数的实现：
+```c
+void ei_interrupt(int reg_ptr)
+{
+    ...
+    while ((interrupts = inb_p(e8390_base + EN0_ISR)) != 0 && ++boguscount < 5) {
+        ...
+        if (interrupts & ENISR_OVER) {
+            ...
+        } else if (interrupts & (ENISR_RX+ENISR_RX_ERR)) {
+            /* 接收到数据包 */
+            ei_receive(dev);
+        }
+        /* 数据已经发送成功 */
+        if (interrupts & ENISR_TX) {
+            ei_tx_intr(dev);
+        } else if (interrupts & ENISR_COUNTERS) {
+            ...
+        }
+        ...
+    }
+    ...
+    return;
+}
+```
 
