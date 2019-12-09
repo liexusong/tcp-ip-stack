@@ -80,3 +80,4 @@ static void ei_receive(struct device *dev)
     return;
 }
 ```
+`ei_receive()` 函数主要做了三件事：1) 调用 `alloc_skb()` 申请一个 `sk_buff对象` 用于保存接收到的数据包。2) 调用 `ei_block_input()` 函数从网卡中读取数据包的数据。3) 调用 `netif_rx()` 函数把数据包存储到 `backlog` 队列中，并且调用 `mark_bh(INET_BH)` 来触发网卡中断下半部处理。
