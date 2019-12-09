@@ -38,4 +38,6 @@ void ei_interrupt(int reg_ptr)
     return;
 }
 ```
+当网卡接收到数据包或者成功发送数据包都会触发 `ei_interrupt()` 中断处理函数，而 `ei_interrupt()` 中断处理函数会根据触发中断的类型进行处理，比如接收到数据包便会调用 `ei_receive()` 处理，而成功发生数据包便会调用 `ei_tx_intr()` 函数进行处理。
+
 
