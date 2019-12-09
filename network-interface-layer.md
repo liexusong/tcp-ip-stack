@@ -40,4 +40,43 @@ void ei_interrupt(int reg_ptr)
 ```
 当网卡接收到数据包或者成功发送数据包都会触发 `ei_interrupt()` 中断处理函数，而 `ei_interrupt()` 中断处理函数会根据触发中断的类型进行处理，比如接收到数据包便会调用 `ei_receive()` 处理，而成功发生数据包便会调用 `ei_tx_intr()` 函数进行处理。
 
+下面我们先来分析一下怎么处理接收到的数据包。
 
+### 处理接收到的数据包
+
+上面介绍过，当网卡接收到数据包时，会调用 `ei_receive()` 函数进行处理，`ei_receive()` 函数的实现如下：
+```c
+static void ei_receive(struct device *dev)
+{
+    ...
+    while (++rx_pkt_count < 10) {
+        ...
+        if (pkt_len < 60  ||  pkt_len > 1518) {
+            ...
+        } else if ((rx_frame.status & 0x0F) == ENRSR_RXOK) {
+            int sksize = sizeof(struct sk_buff) + pkt_len;
+            struct sk_buff *skb;
+            
+            skb = alloc_skb(sksize, GFP_ATOMIC);
+            if (skb == NULL) {
+                ...
+            } else {
+                skb->mem_len = sksize;
+                skb->mem_addr = skb;
+                skb->len = pkt_len;
+                skb->dev = dev;
+                
+                ei_block_input(dev, pkt_len, (char *) skb->data,
+                               current_offset + sizeof(rx_frame));
+                netif_rx(skb);
+                ei_local->stat.rx_packets++;
+            }
+        } else {
+            ...
+        }
+        ...
+    }
+    ...
+    return;
+}
+```
