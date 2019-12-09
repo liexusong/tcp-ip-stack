@@ -81,3 +81,42 @@ static void ei_receive(struct device *dev)
 }
 ```
 `ei_receive()` 函数主要做了三件事：1) 调用 `alloc_skb()` 申请一个 `sk_buff对象` 用于保存接收到的数据包。2) 调用 `ei_block_input()` 函数从网卡中读取数据包的数据。3) 调用 `netif_rx()` 函数把数据包存储到 `backlog` 队列中，并且调用 `mark_bh(INET_BH)` 来触发网卡中断下半部处理。
+
+### 网卡中断下半部处理
+接下来我们分析一下网卡中断下半部相关的处理，当网卡接收到数据包后会触发中断处理，然后中断处理会调用 `mark_bh(INET_BH)` 来触发网卡中断下半部处理。网卡中断下半部处理主要通过 `inet_bh()` 函数实现，代码如下：
+```c
+void
+inet_bh(void *tmp)
+{
+  ...
+  while((skb=skb_dequeue(&backlog))!=NULL) // 从backlog队列中获取一个sk_buff
+  {
+    ...
+    type = skb->dev->type_trans(skb, skb->dev);
+
+    for (ptype = ptype_base; ptype != NULL; ptype = ptype->next) {
+        if (ptype->type == type || ptype->type == NET16(ETH_P_ALL)) {
+            struct sk_buff *skb2;
+
+            if (ptype->type==NET16(ETH_P_ALL))
+                nitcount--;
+            if (ptype->copy || nitcount) {    /* copy if we need to */
+                skb2 = alloc_skb(skb->mem_len, GFP_ATOMIC);
+                if (skb2 == NULL)
+                    continue;
+                memcpy(skb2, (const void *) skb, skb->mem_len);
+                skb2->mem_addr = skb2;
+                skb2->h.raw = (unsigned char *)((unsigned long)skb2 + (unsigned long)skb->h.raw - (unsigned long)skb);
+                skb2->free = 1;
+            } else {
+                skb2 = skb;
+            }
+            ...
+            ptype->func(skb2, skb->dev, ptype);
+        }
+    }
+    ...
+  }
+  ...
+}
+```
