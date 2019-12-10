@@ -120,3 +120,25 @@ inet_bh(void *tmp)
   ...
 }
 ```
+`inet_bh()` 函数首先调用 `skb_dequeue()` 函数从 `backlog` 队列中获取一个数据包，然后调用 `skb->dev->type_trans(skb, skb->dev)` 函数从数据包中获取到上一层协议的类型，对于 `NS8390网卡` 而言调用的是 `eth_type_trans()` 函数，代码如下：
+```c
+unsigned short
+eth_type_trans(struct sk_buff *skb, struct device *dev)
+{
+  struct ethhdr *eth;
+
+  eth = (struct ethhdr *) skb->data;
+
+  if(ntohs(eth->h_proto)<1536)
+      return(htons(ETH_P_802_3));
+  return(eth->h_proto);
+}
+```
+`struct ethhdr` 是以太帧头部，定义如下：
+```c
+struct ethhdr {
+  unsigned char     h_dest[ETH_ALEN];   /* destination eth addr */
+  unsigned char     h_source[ETH_ALEN]; /* source ether addr    */
+  unsigned short    h_proto;            /* packet type ID field */
+};
+```
