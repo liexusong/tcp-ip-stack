@@ -82,6 +82,27 @@ static void ei_receive(struct device *dev)
 ```
 `ei_receive()` 函数主要做了三件事：1) 调用 `alloc_skb()` 申请一个 `sk_buff对象` 用于保存接收到的数据包。2) 调用 `ei_block_input()` 函数从网卡中读取数据包的数据。3) 调用 `netif_rx()` 函数把数据包存储到 `backlog` 队列中，并且调用 `mark_bh(INET_BH)` 来触发网卡中断下半部处理。
 
+`netif_rx()` 函数实现如下：
+```c
+void
+netif_rx(struct sk_buff *skb)
+{
+  /* Set any necessary flags. */
+  skb->sk = NULL;
+  skb->free = 1;
+
+  /* and add it to the "backlog" queue. */
+  IS_SKB(skb);
+  skb_queue_tail(&backlog,skb);
+
+  /* If any packet arrived, mark it for processing. */
+  if (backlog != NULL) mark_bh(INET_BH);
+
+  return;
+}
+```
+这个函数比较简单，首先调用 `skb_queue_tail()` 函数把数据包添加到 `backlog` 队列中（所有从网卡接收到并没被处理的数据包都会放置在 `backlog` 队列中），然后调用 `mark_bh(INET_BH)` 把网络中断下半部标志为需要调用（需要执行）。
+
 ### 网卡中断下半部处理
 接下来我们分析一下网卡中断下半部相关的处理，当网卡接收到数据包后会触发中断处理，然后中断处理会调用 `mark_bh(INET_BH)` 来触发网卡中断下半部处理。网卡中断下半部处理主要通过 `inet_bh()` 函数实现，代码如下：
 ```c
