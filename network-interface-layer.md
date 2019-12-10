@@ -142,3 +142,39 @@ struct ethhdr {
   unsigned short    h_proto;            /* packet type ID field */
 };
 ```
+网络层的类型保存在以太帧头部的 `h_proto` 字段中，`eth_type_trans()` 函数就是读取以太帧的 `h_proto` 字段内容并且返回。
+
+接着分析 `inet_bh()` 函数，获取到网络层协议类型后，遍历所有系统支持的网络层协议（`ptype_base`），然后找到跟以太帧头部的 `h_proto` 字段一致的协议对象（`struct packet_type`），再通过调用协议对象的 `func` 回调来处理数据包。`ptype_base` 变量定义如下：
+```c
+...
+static struct packet_type arp_packet_type = {
+  NET16(ETH_P_ARP),
+  0,        /* copy */
+  arp_rcv,
+  NULL,
+#ifdef CONFIG_IPX
+#ifndef CONFIG_AX25
+  &ipx_packet_type
+#else
+  &ax25_packet_type
+#endif
+#else
+#ifdef CONFIG_AX25
+  &ax25_packet_type
+#else
+  NULL        /* next */
+#endif
+#endif
+};
+
+
+static struct packet_type ip_packet_type = {
+  NET16(ETH_P_IP),
+  0,        /* copy */
+  ip_rcv,
+  NULL,
+  &arp_packet_type
+};
+
+struct packet_type *ptype_base = &ip_packet_type;
+```
