@@ -136,6 +136,19 @@ eth_type_trans(struct sk_buff *skb, struct device *dev)
 ```
 `struct ethhdr` 是以太帧头部，定义如下：
 ```c
+/*
+ * +----------+
+ * |  h_dest  |
+ * +----------+
+ * | h_source |
+ * +----------+
+ * | h_proto  |
+ * +----------+
+ * | ........ |
+ * |  paylog  |
+ * | ........ |
+ * +----------+
+ */
 struct ethhdr {
   unsigned char     h_dest[ETH_ALEN];   /* destination eth addr */
   unsigned char     h_source[ETH_ALEN]; /* source ether addr    */
@@ -178,4 +191,4 @@ static struct packet_type ip_packet_type = {
 
 struct packet_type *ptype_base = &ip_packet_type;
 ```
-`ptype_base` 变量保存了系统支持的网络层协议，比如 `IP协议`、`ARP协议`、`IPX协议等`，本文主要介绍的是 `IP协议`，所以其处理函数为 `ip_rcv()`。
+`ptype_base` 变量保存了系统支持的网络层协议，比如：`IP协议`、`ARP协议`、`IPX协议等`，本文主要介绍的是 `IP协议`，所以其处理函数为 `ip_rcv()`。
