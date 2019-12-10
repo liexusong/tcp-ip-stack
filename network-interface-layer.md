@@ -178,3 +178,4 @@ static struct packet_type ip_packet_type = {
 
 struct packet_type *ptype_base = &ip_packet_type;
 ```
+`ptype_base` 变量保存了系统支持的网络层协议，比如 `IP协议`、`ARP协议`、`IPX协议等`，本文主要介绍的是 `IP协议`，所以其处理函数为 `ip_rcv()`。
