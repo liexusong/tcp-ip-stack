@@ -138,14 +138,14 @@ eth_type_trans(struct sk_buff *skb, struct device *dev)
 ```c
 /*
  * +----------+
- * |  h_dest  |
+ * |  h_dest  | --> 目标物理地址
  * +----------+
- * | h_source |
+ * | h_source | --> 源物理地址
  * +----------+
- * | h_proto  |
+ * | h_proto  | --> 上层协议类型
  * +----------+
  * | ........ |
- * |  paylog  |
+ * | payload  | --> 上层负载数据
  * | ........ |
  * +----------+
  */
